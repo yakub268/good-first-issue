@@ -1,10 +1,12 @@
-# 🎯 Good First Issue Finder
+# Good First Issue Finder
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/yakub268/good-first-issue?style=social)](https://github.com/yakub268/good-first-issue)
 
 Find "good first issue" labeled issues in open source projects you'll actually want to contribute to.
+
+**[Try it instantly (no install)](https://good-first-issue.onrender.com)** | [Install CLI](#installation)
 
 ## Why This Exists
 
@@ -22,7 +24,7 @@ Most "good first issue" finders just dump a list of random issues. This tool:
 - **Beautiful terminal UI** — powered by Rich
 - **Shareable result cards** — auto-generated PNGs perfect for Twitter/LinkedIn
 - **Lucky mode** — get ONE perfect match instantly
-- **Web version** — try it without installing (see web/README.md)
+- **Web version** — [try it instantly](https://good-first-issue.onrender.com) without installing
 - **Success tracking** — track your contributions and celebrate wins
 - **Fast** — persistent HTTP connections, smart caching
 - **Private** — your token stays local, optional anonymous telemetry

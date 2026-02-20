@@ -1,0 +1,86 @@
+I need help deploying my Flask web app to Render.com. Guide me through the process step-by-step.
+
+## What I'm Deploying
+
+A Flask web application called "Good First Issue Finder" that helps developers find quality open source issues to contribute to.
+
+**GitHub Repository:** https://github.com/yakub268/good-first-issue
+
+**Tech Stack:**
+- Python 3.11
+- Flask 3.0+
+- httpx, pydantic, python-dotenv
+- Gunicorn (WSGI server)
+
+## Project Structure
+
+```
+good-first-issue/
+├── web/
+│   ├── app.py              # Main Flask application
+│   ├── templates/
+│   │   └── index.html      # Frontend UI
+│   ├── requirements.txt    # Python dependencies
+│   ├── Procfile           # Process file (gunicorn app:app)
+│   └── runtime.txt        # Python version (3.11.0)
+├── gfi/                    # Python package (imported by app.py)
+│   ├── github.py
+│   ├── analyzer.py
+│   ├── scorer.py
+│   └── ...
+└── render.yaml            # Render config
+```
+
+## Configuration Details
+
+**Root Directory:** `web` (the app is in the web/ subdirectory)
+
+**Build Command:**
+```
+pip install -r requirements.txt
+```
+
+**Start Command:**
+```
+gunicorn app:app
+```
+
+**Environment Variable Required:**
+- Key: `GITHUB_TOKEN`
+- Value: I have a GitHub personal access token (starts with ghp_)
+- This is required for the app to work - it calls the GitHub API
+
+**Port:** Render auto-assigns (Flask defaults to 5000 but Gunicorn will use Render's PORT env var)
+
+## What I Need Help With
+
+1. Walk me through the Render.com dashboard to deploy this
+2. Help me configure the service correctly
+3. Make sure the root directory and build commands are set right
+4. Add the environment variable securely
+5. Troubleshoot any build/deployment errors
+6. Verify the app is working after deployment
+
+## Current Status
+
+- Code is pushed to GitHub (master branch)
+- I'm logged into Render.com in my browser
+- I have a GitHub token ready to add
+- This is my first time using Render
+
+## Expected Behavior After Deployment
+
+When I visit the deployed URL:
+- Should see a clean landing page with a search box
+- Enter a GitHub username → shows matching issues
+- Should work in ~5 seconds
+- Mobile-friendly
+
+## Questions to Ask Me
+
+- What do you see on your Render dashboard?
+- Have you connected your GitHub account to Render?
+- Do you see any errors in the build logs?
+- What URL did Render assign to your app?
+
+Walk me through this step-by-step and help me troubleshoot any issues. I'm ready to start.
