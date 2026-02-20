@@ -28,11 +28,11 @@ def display_issues(scored_issues: List[Tuple[IssueScore, Issue]], console: Conso
         header_style="bold cyan",
     )
 
-    table.add_column("Score", justify="right", style="green", width=6)
-    table.add_column("Project", style="cyan", width=25)
-    table.add_column("Issue", style="white", width=50)
-    table.add_column("Lang", style="yellow", width=10)
-    table.add_column("⭐", justify="right", width=6)
+    table.add_column("Score", justify="right", style="green", no_wrap=True)
+    table.add_column("Project", style="cyan", no_wrap=True)
+    table.add_column("Issue", style="white")
+    table.add_column("Lang", style="yellow", no_wrap=True)
+    table.add_column("Stars", justify="right", style="yellow", no_wrap=True)
 
     for score, issue in scored_issues:
         # Truncate long titles
