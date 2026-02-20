@@ -43,7 +43,19 @@ def find_issues():
         analyzer = ProfileAnalyzer(client)
 
         # Build quick profile
-        profile = analyzer.build_profile(username)
+        try:
+            profile = analyzer.build_profile(username)
+        except Exception as e:
+            return jsonify({'error': f'Username "{username}" not found or profile is private'}), 404
+
+        # Check if we have any languages
+        if not profile.languages:
+            return jsonify({
+                'username': username,
+                'languages': [],
+                'issues': [],
+                'message': 'No public repositories found. Try starring some repos or making your profile public.'
+            })
 
         # Search for issues
         languages = [language] if language else profile.languages[:2]
@@ -80,7 +92,9 @@ def find_issues():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Log the error but don't expose internal details
+        print(f"Error: {e}")  # Server logs
+        return jsonify({'error': 'Failed to fetch issues. Please try again later.'}), 500
 
 
 if __name__ == '__main__':

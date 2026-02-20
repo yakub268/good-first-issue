@@ -207,6 +207,10 @@
             <button onclick="findIssues()">Find Issues</button>
         </div>
 
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="#" onclick="document.getElementById('username').value='torvalds'; findIssues(); return false;" style="color: #667eea; text-decoration: none; font-size: 0.9rem;">Try demo (torvalds)</a>
+        </div>
+
         <div class="error" id="error"></div>
 
         <div class="loading" id="loading">
