@@ -3,6 +3,7 @@
 from flask import Flask, render_template, request, jsonify
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # Add parent directory to path to import gfi modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -103,8 +104,8 @@ def find_issues():
                                 html_url=item['html_url'],
                                 body=item.get('body'),
                                 state=item['state'],
-                                created_at=item['created_at'],
-                                updated_at=item['updated_at'],
+                                created_at=datetime.fromisoformat(item['created_at'].rstrip("Z")),
+                                updated_at=datetime.fromisoformat(item['updated_at'].rstrip("Z")),
                                 labels=[l['name'] for l in item.get('labels', [])],
                                 repo_owner=item['repository_url'].split('/')[-2],
                                 repo_name=item['repository_url'].split('/')[-1],
@@ -115,7 +116,8 @@ def find_issues():
                                 author=item.get('user', {}).get('login', 'unknown')
                             )
                             all_issues.append(issue)
-                except:
+                except Exception as e:
+                    print(f"Error parsing issue {item.get('number', '?')}: {e}")
                     continue
 
                 if len(all_issues) >= 30:
