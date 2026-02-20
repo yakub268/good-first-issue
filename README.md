@@ -144,10 +144,43 @@ Config stored in `~/.gfi-config.json`:
 }
 ```
 
+## Roadmap
+
+- [ ] Support for GitLab issues
+- [ ] Alternative labels ("help wanted", "beginner friendly")
+- [ ] Spam detection/filtering
+- [ ] Caching for faster subsequent searches
+- [ ] Export results to JSON/CSV
+- [ ] Watch mode with notifications
+- [ ] GraphQL API support for better performance
+- [ ] Machine learning model for quality prediction
+
+See [open issues](https://github.com/yakub268/good-first-issue/issues) for more.
+
 ## Contributing
 
-This project itself has good first issues! Check the Issues tab.
+This project itself has good first issues! Check the [Issues tab](https://github.com/yakub268/good-first-issue/issues).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+## Star History
+
+If you find this useful, consider giving it a star! ⭐
+
+## Acknowledgments
+
+Built with:
+- [Click](https://click.palletsprojects.com/) - Beautiful CLI framework
+- [Rich](https://rich.readthedocs.io/) - Terminal formatting
+- [httpx](https://www.python-httpx.org/) - Modern HTTP client
+- [Pydantic](https://docs.pydantic.dev/) - Data validation
+
+Inspired by the need for better discovery in the open source ecosystem.
 
 ## License
 
-MIT License - see LICENSE file
+MIT License - see [LICENSE](LICENSE) file
+
+---
+
+Made with ❤️ for the open source community. Happy contributing!
