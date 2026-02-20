@@ -72,7 +72,7 @@ Overall Score: 0.72 (GOOD)
 - ✅ Config persistence in ~/.gfi-config.json
 
 ### Known Issues
-1. **Table rendering** - Score and Stars columns not showing in find output (cosmetic issue)
+1. ~~**Table rendering**~~ - ✅ FIXED (commit 84eb86e)
 2. **"Good first issue" scarcity** - The label is genuinely rare in popular repos right now
    - 22,513 total globally (GitHub API)
    - Most popular projects don't actively maintain this label
