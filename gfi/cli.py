@@ -20,6 +20,7 @@ from . import telemetry
 from . import success
 from . import watch
 from .export import export_to_json, export_to_csv
+from .cache import DiskCache
 
 console = Console()
 load_dotenv()
@@ -83,7 +84,8 @@ def init(token):
 @click.option("--limit", type=int, default=10, help="Number of issues to show")
 @click.option("--no-card", is_flag=True, help="Skip generating shareable card")
 @click.option("--export", type=click.Choice(['json', 'csv']), help="Export results to file")
-def find(lang, min_stars, max_age, limit, no_card, export):
+@click.option("--no-cache", is_flag=True, help="Bypass cache and fetch fresh data")
+def find(lang, min_stars, max_age, limit, no_card, export, no_cache):
     """Find good first issues matching your profile."""
 
     if not CONFIG_PATH.exists():
@@ -97,7 +99,7 @@ def find(lang, min_stars, max_age, limit, no_card, export):
 
     with console.status(f"[cyan]Searching for issues in {', '.join(languages)}..."):
         try:
-            client = GitHubClient(config["token"])
+            client = GitHubClient(config["token"], use_cache=not no_cache)
             scorer = IssueScorer(client)
 
             # Search for issues
@@ -193,7 +195,8 @@ cli.add_command(telemetry_cmd, name="telemetry")
 
 @cli.command()
 @click.argument("issue_url")
-def show(issue_url):
+@click.option("--no-cache", is_flag=True, help="Bypass cache and fetch fresh data")
+def show(issue_url, no_cache):
     """Show detailed information about a specific issue."""
 
     if not CONFIG_PATH.exists():
@@ -213,7 +216,7 @@ def show(issue_url):
         repo_name = parts[-3]
         owner = parts[-4]
 
-        client = GitHubClient(config["token"])
+        client = GitHubClient(config["token"], use_cache=not no_cache)
         issue = client.get_issue(owner, repo_name, issue_number)
         scorer = IssueScorer(client)
         score = scorer.score_issue(issue)
@@ -227,7 +230,8 @@ def show(issue_url):
 @cli.command()
 @click.option("--lang", multiple=True, help="Filter by language (can use multiple times)")
 @click.option("--min-stars", type=int, default=50, help="Minimum repo stars")
-def lucky(lang, min_stars):
+@click.option("--no-cache", is_flag=True, help="Bypass cache and fetch fresh data")
+def lucky(lang, min_stars, no_cache):
     """Find ONE perfect issue - feeling lucky mode."""
 
     if not CONFIG_PATH.exists():
@@ -239,7 +243,7 @@ def lucky(lang, min_stars):
 
     with console.status("[cyan]Finding your perfect match..."):
         try:
-            client = GitHubClient(config["token"])
+            client = GitHubClient(config["token"], use_cache=not no_cache)
             scorer = IssueScorer(client)
 
             # Get more candidates for better lucky pick
@@ -366,6 +370,38 @@ def watch_cmd(start, stop, status):
 
 # Register watch command
 cli.add_command(watch_cmd, name="watch")
+
+
+@cli.command()
+@click.option("--stats", is_flag=True, help="Show cache statistics")
+@click.option("--clear", is_flag=True, help="Clear entire cache")
+def cache(stats, clear):
+    """Manage API response cache."""
+
+    cache_manager = DiskCache()
+
+    if clear:
+        cache_manager.clear()
+        console.print("[green]Cache cleared successfully[/green]")
+        return
+
+    if stats or (not stats and not clear):
+        # Show stats by default
+        cache_stats = cache_manager.get_stats()
+
+        table = Table(title="Cache Statistics", box=box.ROUNDED)
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="green")
+
+        table.add_row("Status", "Enabled" if cache_stats['enabled'] else "Disabled")
+        table.add_row("Cache Size", f"{cache_stats['size_mb']} MB")
+        table.add_row("Cache Limit", f"{cache_stats['max_size_mb']} MB")
+        table.add_row("Cached Files", str(cache_stats['file_count']))
+        table.add_row("Cache Location", str(DiskCache.CACHE_DIR))
+
+        console.print(table)
+        console.print("\n[dim]Tip: Use --no-cache flag to bypass cache for fresh data[/dim]")
+        console.print("[dim]Tip: Use 'gfi cache --clear' to clear cache[/dim]")
 
 
 def _export_results(scored_issues, format, username):
