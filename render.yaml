@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: good-first-issue-finder
+    env: python
+    region: oregon
+    plan: free
+    branch: master
+    buildCommand: "cd web && pip install -r requirements.txt"
+    startCommand: "cd web && gunicorn app:app"
+    envVars:
+      - key: GITHUB_TOKEN
+        sync: false
