@@ -18,6 +18,8 @@ from .card import generate_card
 from .viral import offer_share
 from . import telemetry
 from . import success
+from . import watch
+from .export import export_to_json, export_to_csv
 
 console = Console()
 load_dotenv()
@@ -80,7 +82,8 @@ def init(token):
 @click.option("--max-age", type=int, default=30, help="Maximum issue age in days")
 @click.option("--limit", type=int, default=10, help="Number of issues to show")
 @click.option("--no-card", is_flag=True, help="Skip generating shareable card")
-def find(lang, min_stars, max_age, limit, no_card):
+@click.option("--export", type=click.Choice(['json', 'csv']), help="Export results to file")
+def find(lang, min_stars, max_age, limit, no_card, export):
     """Find good first issues matching your profile."""
 
     if not CONFIG_PATH.exists():
@@ -114,6 +117,11 @@ def find(lang, min_stars, max_age, limit, no_card):
 
             # Sort by score
             scored_issues.sort(key=lambda x: x[0].total_score, reverse=True)
+
+            # Export if requested
+            if export:
+                export_path = _export_results(scored_issues[:limit], export, config["username"])
+                console.print(f"[green]Exported to: {export_path}[/green]")
 
             # Display top results
             display_issues(scored_issues[:limit], console)
@@ -306,6 +314,75 @@ cli.add_command(success_cmd, name="success")
 def wins():
     """Show your successful contributions."""
     success.display_successes(console)
+
+
+@cli.command()
+@click.option("--start", is_flag=True, help="Start watch daemon")
+@click.option("--stop", is_flag=True, help="Stop watch daemon")
+@click.option("--status", is_flag=True, help="Show watch status")
+def watch_cmd(start, stop, status):
+    """Watch for new good first issues (background daemon)."""
+
+    if not CONFIG_PATH.exists():
+        console.print("[red]Error:[/red] Not initialized. Run 'gfi init' first.")
+        return
+
+    config = json.loads(CONFIG_PATH.read_text())
+
+    if start:
+        watch.enable_watch()
+        console.print("[green]Watch mode enabled[/green]")
+        console.print("\nStarting daemon (checks every 6 hours)...")
+        console.print("Desktop notifications for issues scoring 0.7+")
+        console.print("\nPress Ctrl+C to stop\n")
+
+        try:
+            watch.run_watch_daemon(config)
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Watch mode stopped[/yellow]")
+
+    elif stop:
+        watch.disable_watch()
+        console.print("[yellow]Watch mode disabled[/yellow]")
+        console.print("\nDaemon will stop on next check cycle.")
+
+    elif status:
+        enabled = watch.is_watch_enabled()
+        state = watch.load_watch_state()
+
+        status_text = "[green]enabled[/green]" if enabled else "[red]disabled[/red]"
+        console.print(f"Watch mode: {status_text}")
+
+        if state.get("last_check"):
+            console.print(f"Last check: {state['last_check'][:19]}")
+            console.print(f"Seen issues: {len(state.get('seen_issues', []))}")
+
+    else:
+        console.print("Usage:")
+        console.print("  gfi watch --start   Start watch daemon")
+        console.print("  gfi watch --stop    Stop watch daemon")
+        console.print("  gfi watch --status  Show status")
+
+
+# Register watch command
+cli.add_command(watch_cmd, name="watch")
+
+
+def _export_results(scored_issues, format, username):
+    """Export results to file."""
+    from pathlib import Path
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"gfi_results_{username}_{timestamp}.{format}"
+    output_path = Path.cwd() / filename
+
+    if format == 'json':
+        export_to_json(scored_issues, output_path)
+    elif format == 'csv':
+        export_to_csv(scored_issues, output_path)
+
+    return output_path
 
 
 if __name__ == "__main__":

@@ -29,6 +29,9 @@ dev = [
     "black>=24.0.0",
     "ruff>=0.3.0",
 ]
+watch = [
+    "plyer>=2.1.0",
+]
 
 [project.scripts]
 gfi = "gfi.cli:cli"
