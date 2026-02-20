@@ -16,13 +16,13 @@ def display_issues(scored_issues: List[Tuple[IssueScore, Issue]], console: Conso
     if not scored_issues:
         console.print("[yellow]No issues found matching your criteria.[/yellow]")
         console.print("\nTry:")
-        console.print("  • Different languages (--lang python --lang javascript)")
-        console.print("  • Lower minimum stars (--min-stars 10)")
-        console.print("  • Longer time window (--max-age 60)")
+        console.print("  - Different languages (--lang python --lang javascript)")
+        console.print("  - Lower minimum stars (--min-stars 10)")
+        console.print("  - Longer time window (--max-age 60)")
         return
 
     table = Table(
-        title="🎯 Good First Issues For You",
+        title="Good First Issues",
         box=box.ROUNDED,
         show_header=True,
         header_style="bold cyan",

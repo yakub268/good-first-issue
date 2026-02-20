@@ -14,6 +14,7 @@ class IssueScore(BaseModel):
     activity_score: float  # 0-1
     total_score: float
     reason: str
+    lucky_score: Optional[float] = None  # Enhanced score for lucky command
 
 
 class IssueScorer:
@@ -177,3 +178,62 @@ class IssueScorer:
             reasons.append("active project")
 
         return ", ".join(reasons) if reasons else "standard issue"
+
+    def score_for_lucky(self, issue: Issue) -> IssueScore:
+        """Enhanced scoring for 'lucky' command - find THE ONE perfect match."""
+        base_score = self.score_issue(issue)
+
+        # Additional factors for lucky mode
+        trending_bonus = self._score_trending(issue)
+        momentum_bonus = self._score_momentum(issue)
+        achievability_bonus = self._score_achievability(issue)
+
+        # Lucky score combines base + bonuses
+        lucky_score = (
+            base_score.total_score * 0.6 +  # Base quality
+            trending_bonus * 0.15 +          # Recent attention
+            momentum_bonus * 0.15 +          # Active progress
+            achievability_bonus * 0.10       # Completable
+        )
+
+        base_score.lucky_score = lucky_score
+        return base_score
+
+    def _score_trending(self, issue: Issue) -> float:
+        """Score based on recent activity spikes."""
+        # Recent comments indicate current interest
+        if issue.comments >= 3 and (datetime.now() - issue.updated_at).days < 3:
+            return 1.0
+        elif issue.comments >= 1 and (datetime.now() - issue.updated_at).days < 7:
+            return 0.7
+        elif (datetime.now() - issue.updated_at).days < 14:
+            return 0.5
+        return 0.3
+
+    def _score_momentum(self, issue: Issue) -> float:
+        """Score based on repo momentum (recent commits, PR merges)."""
+        # Proxy: if repo is popular and recently updated
+        if issue.repo_stars > 500 and (datetime.now() - issue.updated_at).days < 7:
+            return 1.0
+        elif issue.repo_stars > 100 and (datetime.now() - issue.updated_at).days < 14:
+            return 0.7
+        elif (datetime.now() - issue.updated_at).days < 30:
+            return 0.5
+        return 0.3
+
+    def _score_achievability(self, issue: Issue) -> float:
+        """Score based on likely time to complete."""
+        body = (issue.body or "").lower()
+
+        # Quick wins
+        quick_indicators = ["typo", "docs", "documentation", "readme", "comment", "simple"]
+        if any(ind in body for ind in quick_indicators):
+            return 1.0
+
+        # Avoid complex issues
+        complex_indicators = ["architecture", "refactor", "redesign", "breaking change"]
+        if any(ind in body for ind in complex_indicators):
+            return 0.2
+
+        # Standard issue
+        return 0.6

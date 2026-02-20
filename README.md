@@ -17,11 +17,15 @@ Most "good first issue" finders just dump a list of random issues. This tool:
 
 ## Features
 
-- 🔍 **Smart search** — finds issues in your preferred languages from your starred repos
-- 📊 **Multi-factor scoring** — clarity, maintainer response time, freshness, project activity
-- 🎨 **Beautiful terminal UI** — powered by Rich
-- ⚡ **Fast** — persistent HTTP connections, smart caching
-- 🔒 **Private** — your token stays local, no external tracking
+- **Smart search** — finds issues in your preferred languages from your starred repos
+- **Multi-factor scoring** — clarity, maintainer response time, freshness, project activity
+- **Beautiful terminal UI** — powered by Rich
+- **Shareable result cards** — auto-generated PNGs perfect for Twitter/LinkedIn
+- **Lucky mode** — get ONE perfect match instantly
+- **Web version** — try it without installing (see web/README.md)
+- **Success tracking** — track your contributions and celebrate wins
+- **Fast** — persistent HTTP connections, smart caching
+- **Private** — your token stays local, optional anonymous telemetry
 
 ## Installation
 
@@ -64,6 +68,11 @@ pip install -e .
 gfi find
 ```
 
+### Get ONE perfect match (lucky mode)
+```bash
+gfi lucky
+```
+
 ### Filter by specific languages
 ```bash
 gfi find --lang python --lang rust
@@ -77,6 +86,18 @@ gfi find --min-stars 100 --max-age 14 --limit 20
 ### View issue details
 ```bash
 gfi show https://github.com/owner/repo/issues/123
+```
+
+### Track your successes
+```bash
+gfi success https://github.com/owner/repo/issues/123 --pr https://github.com/owner/repo/pull/456
+gfi wins
+```
+
+### Enable live stats (optional)
+```bash
+gfi telemetry --enable
+gfi stats
 ```
 
 ## How It Works
@@ -146,14 +167,16 @@ Config stored in `~/.gfi-config.json`:
 
 ## Roadmap
 
+- [x] Shareable result cards
+- [x] Lucky mode (one perfect match)
+- [x] Web version (instant, no install)
+- [x] Success tracking
+- [x] Live activity stats
 - [ ] Support for GitLab issues
 - [ ] Alternative labels ("help wanted", "beginner friendly")
-- [ ] Spam detection/filtering
-- [ ] Caching for faster subsequent searches
+- [ ] Watch mode with notifications (daemon)
 - [ ] Export results to JSON/CSV
-- [ ] Watch mode with notifications
 - [ ] GraphQL API support for better performance
-- [ ] Machine learning model for quality prediction
 
 See [open issues](https://github.com/yakub268/good-first-issue/issues) for more.
 

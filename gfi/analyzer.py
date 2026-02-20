@@ -11,11 +11,12 @@ class ProfileAnalyzer:
     def __init__(self, client: GitHubClient):
         self.client = client
 
-    def build_profile(self) -> UserProfile:
+    def build_profile(self, username: str = None) -> UserProfile:
         """Build user profile from GitHub activity."""
 
-        user = self.client.get_user()
-        username = user["login"]
+        if username is None:
+            user = self.client.get_user()
+            username = user["login"]
 
         # Get starred repos
         starred = self.client.get_user_starred(username)
