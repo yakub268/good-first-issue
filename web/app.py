@@ -57,21 +57,40 @@ def find_issues():
                 'message': 'No public repositories found. Try starring some repos or making your profile public.'
             })
 
-        # Search for issues across multiple languages for diversity
+        # Search for issues - vary by user's profile hash for diversity
+        import hashlib
+        user_hash = int(hashlib.md5(username.encode()).hexdigest()[:8], 16)
+
         languages = [language] if language else profile.languages[:3]
         all_issues = []
+
+        # Search across languages with different age windows for variety
+        age_window = (user_hash % 3) * 10 + 7  # 7, 17, or 27 days
 
         for lang in languages:
             try:
                 lang_issues = client.search_good_first_issues(
                     languages=[lang],
-                    min_stars=20,  # Lower threshold for more variety
-                    max_age_days=30,
-                    limit=10
+                    min_stars=20,
+                    max_age_days=age_window,
+                    limit=15
                 )
                 all_issues.extend(lang_issues)
             except:
                 continue
+
+        # If not enough issues, try with relaxed constraints
+        if len(all_issues) < 5:
+            try:
+                backup_issues = client.search_good_first_issues(
+                    languages=languages[:1],
+                    min_stars=10,
+                    max_age_days=60,
+                    limit=20
+                )
+                all_issues.extend(backup_issues)
+            except:
+                pass
 
         # Remove duplicates
         seen_urls = set()
@@ -85,17 +104,15 @@ def find_issues():
         scorer = IssueScorer(client)
         scored_issues = []
 
-        for issue in unique_issues[:30]:  # Score more candidates
+        for issue in unique_issues[:40]:
             score = scorer.score_issue(issue)
-            if score.total_score > 0.3:
-                # Boost score if repo topics match user interests
-                topic_boost = 0
-                if hasattr(profile, 'topics') and profile.topics:
-                    # This would require fetching repo topics, skip for now
-                    pass
 
+            # Vary threshold slightly by user for diversity
+            threshold = 0.25 + (user_hash % 10) * 0.01  # 0.25-0.34
+
+            if score.total_score > threshold:
                 scored_issues.append({
-                    'score': round(score.total_score + topic_boost, 2),
+                    'score': round(score.total_score, 2),
                     'title': issue.title,
                     'repo': f"{issue.repo_owner}/{issue.repo_name}",
                     'url': issue.html_url,
@@ -104,13 +121,14 @@ def find_issues():
                     'reason': score.reason,
                 })
 
-        # Sort by score
+        # Sort by score and take top N (vary N by user)
         scored_issues.sort(key=lambda x: x['score'], reverse=True)
+        result_count = 5 + (user_hash % 3)  # 5, 6, or 7 results
 
         return jsonify({
             'username': username,
             'languages': languages,
-            'issues': scored_issues[:5],  # Top 5
+            'issues': scored_issues[:result_count],
         })
 
     except Exception as e:
