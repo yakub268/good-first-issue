@@ -4,6 +4,7 @@ import httpx
 from datetime import datetime, timedelta
 from typing import List, Optional
 from pydantic import BaseModel
+from .cache import DiskCache
 
 
 class Issue(BaseModel):
@@ -40,7 +41,7 @@ class GitHubClient:
 
     BASE_URL = "https://api.github.com"
 
-    def __init__(self, token: str):
+    def __init__(self, token: str, use_cache: bool = True):
         self.token = token
         self.client = httpx.Client(
             headers={
@@ -49,6 +50,7 @@ class GitHubClient:
             },
             timeout=30.0,
         )
+        self.cache = DiskCache(enabled=use_cache)
 
     def get_user(self) -> dict:
         """Get authenticated user info."""
@@ -110,17 +112,25 @@ class GitHubClient:
             ]
             query = " ".join(query_parts)
 
-            response = self.client.get(
-                f"{self.BASE_URL}/search/issues",
-                params={
-                    "q": query,
-                    "sort": "created",
-                    "order": "desc",
-                    "per_page": min(100, limit),
-                }
-            )
-            response.raise_for_status()
-            data = response.json()
+            # Check cache first
+            cache_key = f"search:{query}:{limit}"
+            cached_data = self.cache.get(cache_key, self.cache.SEARCH_TTL_MINUTES)
+
+            if cached_data is not None:
+                data = cached_data
+            else:
+                response = self.client.get(
+                    f"{self.BASE_URL}/search/issues",
+                    params={
+                        "q": query,
+                        "sort": "created",
+                        "order": "desc",
+                        "per_page": min(100, limit),
+                    }
+                )
+                response.raise_for_status()
+                data = response.json()
+                self.cache.set(cache_key, data)
 
             for item in data.get("items", []):
                 # Parse repo info from URL
@@ -129,7 +139,7 @@ class GitHubClient:
                 owner = repo_parts[-2]
                 repo_name = repo_parts[-1]
 
-                # Get repo details
+                # Get repo details (also cached)
                 repo = self.get_repo(owner, repo_name)
 
                 issues.append(Issue(
@@ -155,9 +165,18 @@ class GitHubClient:
 
     def get_repo(self, owner: str, repo: str) -> dict:
         """Get repository details."""
+        # Check cache first
+        cache_key = f"repo:{owner}/{repo}"
+        cached_data = self.cache.get(cache_key, self.cache.REPO_TTL_MINUTES)
+
+        if cached_data is not None:
+            return cached_data
+
         response = self.client.get(f"{self.BASE_URL}/repos/{owner}/{repo}")
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        self.cache.set(cache_key, data)
+        return data
 
     def get_issue(self, owner: str, repo: str, issue_number: int) -> Issue:
         """Get specific issue details."""
