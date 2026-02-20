@@ -1,0 +1,65 @@
+[
+  {
+    "score": 0.87,
+    "clarity_score": 0.8,
+    "maintainer_score": 1.0,
+    "freshness_score": 1.0,
+    "activity_score": 0.6,
+    "reason": "Clear description, responsive maintainers, recently posted",
+    "title": "\ud83d\udfe0 LOW \u2014 Contracts CI Missing `cargo clippy` Linting Step",
+    "url": "https://github.com/NOVUS-X/StellArts/issues/88",
+    "repo": "NOVUS-X/StellArts",
+    "language": "Python",
+    "stars": 1,
+    "comments": 5,
+    "labels": [
+      "good first issue",
+      "Stellar",
+      "CI/CD"
+    ],
+    "created_at": "2026-02-19T14:21:55",
+    "updated_at": "2026-02-20T02:57:40"
+  },
+  {
+    "score": 0.72,
+    "clarity_score": 0.5,
+    "maintainer_score": 1.0,
+    "freshness_score": 1.0,
+    "activity_score": 0.3,
+    "reason": "responsive maintainers, recently posted",
+    "title": "Star & Share beacon-skill on GitHub (25 RTC Bounty)",
+    "url": "https://github.com/Scottcjn/rustchain-bounties/issues/157",
+    "repo": "Scottcjn/rustchain-bounties",
+    "language": "Python",
+    "stars": 13,
+    "comments": 23,
+    "labels": [
+      "good first issue",
+      "bounty",
+      "community"
+    ],
+    "created_at": "2026-02-13T21:04:00",
+    "updated_at": "2026-02-18T00:25:16"
+  },
+  {
+    "score": 0.68,
+    "clarity_score": 0.5,
+    "maintainer_score": 1.0,
+    "freshness_score": 0.8,
+    "activity_score": 0.3,
+    "reason": "responsive maintainers",
+    "title": "[BOUNTY] Star & Follow BoTTube \u2014 Earn 2 RTC Instantly (Pool: 200 RTC)",
+    "url": "https://github.com/Scottcjn/bottube/issues/74",
+    "repo": "Scottcjn/bottube",
+    "language": "Python",
+    "stars": 39,
+    "comments": 26,
+    "labels": [
+      "help wanted",
+      "good first issue",
+      "bounty"
+    ],
+    "created_at": "2026-02-08T03:14:23",
+    "updated_at": "2026-02-17T02:04:09"
+  }
+]

@@ -4,9 +4,13 @@ import time
 import json
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import List, Tuple
-from .github import GitHubClient, Issue
-from .analyzer import ProfileAnalyzer
+from typing import List, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .github import Issue
+    from .scorer import IssueScore
+
+from .github import GitHubClient
 from .scorer import IssueScorer
 
 
@@ -53,7 +57,7 @@ def is_watch_enabled() -> bool:
     return load_watch_state().get("enabled", False)
 
 
-def check_for_new_issues(config: dict) -> List[Tuple[IssueScore, Issue]]:
+def check_for_new_issues(config: dict):
     """Check for new high-quality issues."""
 
     client = GitHubClient(config["token"])

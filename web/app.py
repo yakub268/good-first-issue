@@ -57,23 +57,45 @@ def find_issues():
                 'message': 'No public repositories found. Try starring some repos or making your profile public.'
             })
 
-        # Search for issues
-        languages = [language] if language else profile.languages[:2]
-        issues = client.search_good_first_issues(
-            languages=languages,
-            min_stars=50,
-            max_age_days=30,
-            limit=15
-        )
+        # Search for issues across multiple languages for diversity
+        languages = [language] if language else profile.languages[:3]
+        all_issues = []
 
-        # Score issues
+        for lang in languages:
+            try:
+                lang_issues = client.search_good_first_issues(
+                    languages=[lang],
+                    min_stars=20,  # Lower threshold for more variety
+                    max_age_days=30,
+                    limit=10
+                )
+                all_issues.extend(lang_issues)
+            except:
+                continue
+
+        # Remove duplicates
+        seen_urls = set()
+        unique_issues = []
+        for issue in all_issues:
+            if issue.html_url not in seen_urls:
+                seen_urls.add(issue.html_url)
+                unique_issues.append(issue)
+
+        # Score and personalize
         scorer = IssueScorer(client)
         scored_issues = []
-        for issue in issues[:10]:
+
+        for issue in unique_issues[:30]:  # Score more candidates
             score = scorer.score_issue(issue)
             if score.total_score > 0.3:
+                # Boost score if repo topics match user interests
+                topic_boost = 0
+                if hasattr(profile, 'topics') and profile.topics:
+                    # This would require fetching repo topics, skip for now
+                    pass
+
                 scored_issues.append({
-                    'score': round(score.total_score, 2),
+                    'score': round(score.total_score + topic_boost, 2),
                     'title': issue.title,
                     'repo': f"{issue.repo_owner}/{issue.repo_name}",
                     'url': issue.html_url,
