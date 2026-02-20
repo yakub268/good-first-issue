@@ -57,40 +57,69 @@ def find_issues():
                 'message': 'No public repositories found. Try starring some repos or making your profile public.'
             })
 
-        # Search for issues - vary by user's profile hash for diversity
+        # Search multiple label types for much more variety
         import hashlib
         user_hash = int(hashlib.md5(username.encode()).hexdigest()[:8], 16)
 
-        languages = [language] if language else profile.languages[:3]
+        languages = [language] if language else profile.languages[:1]  # Focus on top language
         all_issues = []
 
-        # Search across languages with different age windows for variety
-        age_window = (user_hash % 3) * 10 + 7  # 7, 17, or 27 days
+        # Different users get different label searches
+        label_sets = [
+            ['good first issue', 'good-first-issue'],
+            ['help wanted', 'help-wanted'],
+            ['beginner friendly', 'beginner', 'easy'],
+        ]
 
+        # Pick label set based on user hash
+        labels_to_search = label_sets[user_hash % len(label_sets)]
+
+        # Build custom search query
         for lang in languages:
-            try:
-                lang_issues = client.search_good_first_issues(
-                    languages=[lang],
-                    min_stars=20,
-                    max_age_days=age_window,
-                    limit=15
-                )
-                all_issues.extend(lang_issues)
-            except:
-                continue
+            for label in labels_to_search:
+                query = f'label:"{label}" language:{lang} state:open'
 
-        # If not enough issues, try with relaxed constraints
-        if len(all_issues) < 5:
-            try:
-                backup_issues = client.search_good_first_issues(
-                    languages=languages[:1],
-                    min_stars=10,
-                    max_age_days=60,
-                    limit=20
-                )
-                all_issues.extend(backup_issues)
-            except:
-                pass
+                try:
+                    response = client.client.get(
+                        "https://api.github.com/search/issues",
+                        params={
+                            'q': query,
+                            'sort': 'created',
+                            'order': 'desc',
+                            'per_page': 20
+                        }
+                    )
+
+                    if response.status_code == 200:
+                        items = response.json().get('items', [])
+
+                        for item in items:
+                            # Convert to Issue object
+                            from gfi.github import Issue
+                            issue = Issue(
+                                number=item['number'],
+                                title=item['title'],
+                                url=item['url'],
+                                html_url=item['html_url'],
+                                body=item.get('body'),
+                                state=item['state'],
+                                created_at=item['created_at'],
+                                updated_at=item['updated_at'],
+                                labels=[l['name'] for l in item.get('labels', [])],
+                                repo_owner=item['repository_url'].split('/')[-2],
+                                repo_name=item['repository_url'].split('/')[-1],
+                                repo_stars=0,  # Will score anyway
+                                repo_language=lang,
+                                repo_description=None,
+                                comments=item.get('comments', 0),
+                                author=item.get('user', {}).get('login', 'unknown')
+                            )
+                            all_issues.append(issue)
+                except:
+                    continue
+
+                if len(all_issues) >= 30:
+                    break
 
         # Remove duplicates
         seen_urls = set()
