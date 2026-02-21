@@ -91,6 +91,15 @@ gfi lucky
 gfi find --lang python --lang rust
 ```
 
+### Search alternative labels
+```bash
+# Search for "help wanted" and "beginner friendly" labels
+gfi find --labels "help wanted" --labels "beginner friendly"
+
+# Default: searches "good first issue", "help wanted", and "beginner friendly"
+gfi find
+```
+
 ### Adjust filters
 ```bash
 gfi find --min-stars 100 --max-age 14 --limit 20

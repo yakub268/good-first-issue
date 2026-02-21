@@ -82,10 +82,11 @@ def init(token):
 @click.option("--min-stars", type=int, default=50, help="Minimum repo stars")
 @click.option("--max-age", type=int, default=30, help="Maximum issue age in days")
 @click.option("--limit", type=int, default=10, help="Number of issues to show")
+@click.option("--labels", multiple=True, help="Issue labels to search (defaults: 'good first issue')")
 @click.option("--no-card", is_flag=True, help="Skip generating shareable card")
 @click.option("--export", type=click.Choice(['json', 'csv']), help="Export results to file")
 @click.option("--no-cache", is_flag=True, help="Bypass cache and fetch fresh data")
-def find(lang, min_stars, max_age, limit, no_card, export, no_cache):
+def find(lang, min_stars, max_age, limit, labels, no_card, export, no_cache):
     """Find good first issues matching your profile."""
 
     if not CONFIG_PATH.exists():
@@ -97,6 +98,9 @@ def find(lang, min_stars, max_age, limit, no_card, export, no_cache):
     # Use specified languages or fall back to profile languages
     languages = list(lang) if lang else config.get("languages", [])[:3]
 
+    # Use specified labels or defaults
+    search_labels = list(labels) if labels else ["good first issue", "help wanted", "beginner friendly"]
+
     with console.status(f"[cyan]Searching for issues in {', '.join(languages)}..."):
         try:
             client = GitHubClient(config["token"], use_cache=not no_cache)
@@ -107,7 +111,8 @@ def find(lang, min_stars, max_age, limit, no_card, export, no_cache):
                 languages=languages,
                 min_stars=min_stars,
                 max_age_days=max_age,
-                limit=limit * 3  # Get more to filter
+                limit=limit * 3,  # Get more to filter
+                labels=search_labels,
             )
 
             # Score and rank

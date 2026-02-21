@@ -94,72 +94,91 @@ class GitHubClient:
         min_stars: int = 50,
         max_age_days: int = 30,
         limit: int = 30,
+        labels: Optional[List[str]] = None,
     ) -> List[Issue]:
-        """Search for good first issues."""
+        """Search for good first issues.
+
+        Args:
+            languages: List of programming languages to filter by
+            min_stars: Minimum repository star count
+            max_age_days: Maximum issue age in days
+            limit: Maximum number of results
+            labels: Issue labels to search for (defaults to ["good first issue"])
+        """
+        if labels is None:
+            labels = ["good first issue"]
 
         issues = []
+        seen_urls = set()  # Deduplicate across label searches
         cutoff_date = datetime.now() - timedelta(days=max_age_days)
 
         for language in languages:
-            # Build search query
-            query_parts = [
-                "is:issue",
-                "is:open",
-                'label:"good first issue"',
-                f"language:{language}",
-                f"stars:>={min_stars}",
-                f"created:>={cutoff_date.strftime('%Y-%m-%d')}",
-            ]
-            query = " ".join(query_parts)
+            for label in labels:
+                # Build search query
+                query_parts = [
+                    "is:issue",
+                    "is:open",
+                    f'label:"{label}"',
+                    f"language:{language}",
+                    f"stars:>={min_stars}",
+                    f"created:>={cutoff_date.strftime('%Y-%m-%d')}",
+                ]
+                query = " ".join(query_parts)
 
-            # Check cache first
-            cache_key = f"search:{query}:{limit}"
-            cached_data = self.cache.get(cache_key, self.cache.SEARCH_TTL_MINUTES)
+                # Check cache first
+                cache_key = f"search:{query}:{limit}"
+                cached_data = self.cache.get(cache_key, self.cache.SEARCH_TTL_MINUTES)
 
-            if cached_data is not None:
-                data = cached_data
-            else:
-                response = self.client.get(
-                    f"{self.BASE_URL}/search/issues",
-                    params={
-                        "q": query,
-                        "sort": "created",
-                        "order": "desc",
-                        "per_page": min(100, limit),
-                    }
-                )
-                response.raise_for_status()
-                data = response.json()
-                self.cache.set(cache_key, data)
+                if cached_data is not None:
+                    data = cached_data
+                else:
+                    response = self.client.get(
+                        f"{self.BASE_URL}/search/issues",
+                        params={
+                            "q": query,
+                            "sort": "created",
+                            "order": "desc",
+                            "per_page": min(100, limit),
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    self.cache.set(cache_key, data)
 
-            for item in data.get("items", []):
-                # Parse repo info from URL
-                repo_url = item["repository_url"]
-                repo_parts = repo_url.split("/")
-                owner = repo_parts[-2]
-                repo_name = repo_parts[-1]
+                for item in data.get("items", []):
+                    # Skip duplicates (same issue may appear under multiple labels)
+                    issue_url = item["html_url"]
+                    if issue_url in seen_urls:
+                        continue
+                    seen_urls.add(issue_url)
 
-                # Get repo details (also cached)
-                repo = self.get_repo(owner, repo_name)
+                    # Parse repo info from URL
+                    repo_url = item["repository_url"]
+                    repo_parts = repo_url.split("/")
+                    owner = repo_parts[-2]
+                    repo_name = repo_parts[-1]
 
-                issues.append(Issue(
-                    number=item["number"],
-                    title=item["title"],
-                    url=item["url"],
-                    html_url=item["html_url"],
-                    body=item.get("body", ""),
-                    state=item["state"],
-                    created_at=datetime.fromisoformat(item["created_at"].rstrip("Z")),
-                    updated_at=datetime.fromisoformat(item["updated_at"].rstrip("Z")),
-                    labels=[label["name"] for label in item.get("labels", [])],
-                    repo_owner=owner,
-                    repo_name=repo_name,
-                    repo_stars=repo.get("stargazers_count", 0),
-                    repo_language=repo.get("language"),
-                    repo_description=repo.get("description"),
-                    comments=item.get("comments", 0),
-                    author=item["user"]["login"],
-                ))
+                    # Get repo details (also cached)
+                    repo = self.get_repo(owner, repo_name)
+
+                    issues.append(Issue(
+                        number=item["number"],
+                        title=item["title"],
+                        url=item["url"],
+                        html_url=item["html_url"],
+                        body=item.get("body", ""),
+                        state=item["state"],
+                        created_at=datetime.fromisoformat(item["created_at"].rstrip("Z")),
+                        updated_at=datetime.fromisoformat(item["updated_at"].rstrip("Z")),
+                        labels=[lbl["name"] for lbl in item.get("labels", [])],
+                        repo_owner=owner,
+                        repo_name=repo_name,
+                        repo_stars=repo.get("stargazers_count", 0),
+                        repo_language=repo.get("language"),
+                        repo_description=repo.get("description"),
+                        comments=item.get("comments", 0),
+                        author=item["user"]["login"],
+                    ))
 
         return issues
 
