@@ -17,6 +17,17 @@ Most "good first issue" finders just dump a list of random issues. This tool:
 - **Filters noise** — no vague issues, no dead projects, no overwhelmed maintainers
 - **Shows what matters** — clear descriptions, realistic scope, active engagement
 
+## Demo
+
+### CLI Output
+![CLI Demo](docs/screenshots/demo-cli.svg)
+
+### Initialization
+![Init Success](docs/screenshots/demo-init.svg)
+
+### Detailed Issue View
+![Issue Detail](docs/screenshots/demo-show.svg)
+
 ## Features
 
 - **Smart search** — finds issues in your preferred languages from your starred repos
