@@ -100,6 +100,15 @@ gfi find --labels "help wanted" --labels "beginner friendly"
 gfi find
 ```
 
+### Search on GitLab
+```bash
+# Search GitLab instead of GitHub
+gfi find --platform gitlab
+
+# Works with all other options
+gfi find --platform gitlab --lang python --min-stars 100
+```
+
 ### Adjust filters
 ```bash
 gfi find --min-stars 100 --max-age 14 --limit 20

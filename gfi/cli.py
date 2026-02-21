@@ -11,6 +11,7 @@ import os
 from dotenv import load_dotenv
 
 from .github import GitHubClient
+from .gitlab import GitLabClient
 from .analyzer import ProfileAnalyzer
 from .scorer import IssueScorer
 from .display import display_issues, display_issue_detail
@@ -83,10 +84,11 @@ def init(token):
 @click.option("--max-age", type=int, default=30, help="Maximum issue age in days")
 @click.option("--limit", type=int, default=10, help="Number of issues to show")
 @click.option("--labels", multiple=True, help="Issue labels to search (defaults: 'good first issue')")
+@click.option("--platform", type=click.Choice(['github', 'gitlab']), default='github', help="Platform to search (default: github)")
 @click.option("--no-card", is_flag=True, help="Skip generating shareable card")
 @click.option("--export", type=click.Choice(['json', 'csv']), help="Export results to file")
 @click.option("--no-cache", is_flag=True, help="Bypass cache and fetch fresh data")
-def find(lang, min_stars, max_age, limit, labels, no_card, export, no_cache):
+def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_cache):
     """Find good first issues matching your profile."""
 
     if not CONFIG_PATH.exists():
@@ -101,9 +103,14 @@ def find(lang, min_stars, max_age, limit, labels, no_card, export, no_cache):
     # Use specified labels or defaults
     search_labels = list(labels) if labels else ["good first issue", "help wanted", "beginner friendly"]
 
-    with console.status(f"[cyan]Searching for issues in {', '.join(languages)}..."):
+    with console.status(f"[cyan]Searching {platform} for issues in {', '.join(languages)}..."):
         try:
-            client = GitHubClient(config["token"], use_cache=not no_cache)
+            # Initialize platform client
+            if platform == 'gitlab':
+                client = GitLabClient(config.get("gitlab_token"), use_cache=not no_cache)
+            else:  # github
+                client = GitHubClient(config["token"], use_cache=not no_cache)
+
             scorer = IssueScorer(client)
 
             # Search for issues
