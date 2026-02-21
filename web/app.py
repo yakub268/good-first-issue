@@ -79,7 +79,7 @@ def find_issues():
         # Build custom search query
         for lang in languages:
             for label in labels_to_search:
-                query = f'label:"{label}" language:{lang} state:open'
+                query = f'is:issue label:"{label}" language:{lang} state:open'
 
                 try:
                     response = client.client.get(
