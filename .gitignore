@@ -37,3 +37,4 @@ ENV/
 # Config
 .gfi-cache/
 config.json
+.claude/
