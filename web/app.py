@@ -74,7 +74,6 @@ def find_issues():
 
         # Pick label set based on user hash
         labels_to_search = label_sets[user_hash % len(label_sets)]
-        print(f"[{username}] Searching with labels: {labels_to_search}")
 
         # Build custom search query
         for lang in languages:
@@ -94,7 +93,6 @@ def find_issues():
 
                     if response.status_code == 200:
                         items = response.json().get('items', [])
-                        print(f"[{username}] Query '{query}' returned {len(items)} items")
 
                         for item in items:
                             # Convert to Issue object
@@ -120,18 +118,16 @@ def find_issues():
                                 )
                                 all_issues.append(issue)
                             except Exception as e:
-                                print(f"[{username}] Error parsing issue {item.get('number', '?')}: {e}")
-                    else:
-                        print(f"[{username}] GitHub API error {response.status_code}: {response.text[:100]}")
+                                # Silently skip malformed issues
+                                pass
+                    # API errors are logged by outer exception handler
 
                 except Exception as e:
-                    print(f"[{username}] Request error: {e}")
+                    # Silently skip failed searches
                     continue
 
                 if len(all_issues) >= 30:
                     break
-
-        print(f"[{username}] Total issues collected: {len(all_issues)}")
 
         # Remove duplicates
         seen_urls = set()
@@ -141,15 +137,12 @@ def find_issues():
                 seen_urls.add(issue.html_url)
                 unique_issues.append(issue)
 
-        print(f"[{username}] Unique issues: {len(unique_issues)}")
-
         # Score and personalize
         scorer = IssueScorer(client)
         scored_issues = []
 
         # Vary threshold slightly by user for diversity
         threshold = 0.25 + (user_hash % 10) * 0.01  # 0.25-0.34
-        print(f"[{username}] Scoring threshold: {threshold:.3f}")
 
         for issue in unique_issues[:40]:
             score = scorer.score_issue(issue)
@@ -168,8 +161,6 @@ def find_issues():
         # Sort by score and take top N (vary N by user)
         scored_issues.sort(key=lambda x: x['score'], reverse=True)
         result_count = 5 + (user_hash % 3)  # 5, 6, or 7 results
-
-        print(f"[{username}] Final results: {len(scored_issues)} issues passed scoring")
 
         return jsonify({
             'username': username,
