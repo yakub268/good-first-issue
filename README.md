@@ -37,6 +37,8 @@ Most "good first issue" finders just dump a list of random issues. This tool:
 - **Lucky mode** — get ONE perfect match instantly
 - **Web version** — [try it instantly](https://good-first-issue.onrender.com) without installing
 - **Success tracking** — track your contributions and celebrate wins
+- **GraphQL API** — optional GraphQL support for 3x faster searches and better rate limits
+- **Export results** — save to JSON or CSV for analysis and tracking
 - **Fast** — persistent HTTP connections, smart caching
 - **Private** — your token stays local, optional anonymous telemetry
 
@@ -107,6 +109,27 @@ gfi find --platform gitlab
 
 # Works with all other options
 gfi find --platform gitlab --lang python --min-stars 100
+```
+
+### Use GraphQL for better performance
+```bash
+# Use GitHub's GraphQL API (faster, fewer rate limits)
+gfi find --use-graphql
+
+# Works with all find options
+gfi find --use-graphql --lang python --min-stars 100
+
+# Also works with lucky mode
+gfi lucky --use-graphql
+```
+
+### Export results
+```bash
+# Export to JSON
+gfi find --export json
+
+# Export to CSV
+gfi find --export csv
 ```
 
 ### Adjust filters
@@ -220,8 +243,8 @@ Config stored in `~/.gfi-config.json`:
 - [x] Support for GitLab issues
 - [x] Alternative labels ("help wanted", "beginner friendly")
 - [x] Watch mode with notifications (daemon)
-- [ ] Export results to JSON/CSV
-- [ ] GraphQL API support for better performance
+- [x] Export results to JSON/CSV
+- [x] GraphQL API support for better performance
 
 See [open issues](https://github.com/yakub268/good-first-issue/issues) for more.
 

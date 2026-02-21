@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
 from .github import GitHubClient, Issue
 
 
@@ -20,7 +20,7 @@ class IssueScore(BaseModel):
 class IssueScorer:
     """Scores issues based on multiple factors."""
 
-    def __init__(self, client: GitHubClient):
+    def __init__(self, client: Union[GitHubClient, 'GitHubGraphQLClient']):
         self.client = client
 
     def score_issue(self, issue: Issue) -> IssueScore:

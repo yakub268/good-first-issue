@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 
 from .github import GitHubClient
 from .gitlab import GitLabClient
+from .graphql import GitHubGraphQLClient
 from .analyzer import ProfileAnalyzer
 from .scorer import IssueScorer
 from .display import display_issues, display_issue_detail
@@ -88,7 +89,8 @@ def init(token):
 @click.option("--no-card", is_flag=True, help="Skip generating shareable card")
 @click.option("--export", type=click.Choice(['json', 'csv']), help="Export results to file")
 @click.option("--no-cache", is_flag=True, help="Bypass cache and fetch fresh data")
-def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_cache):
+@click.option("--use-graphql", is_flag=True, help="Use GraphQL API for better performance (GitHub only)")
+def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_cache, use_graphql):
     """Find good first issues matching your profile."""
 
     if not CONFIG_PATH.exists():
@@ -107,9 +109,14 @@ def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_
         try:
             # Initialize platform client
             if platform == 'gitlab':
+                if use_graphql:
+                    console.print("[yellow]Warning:[/yellow] GraphQL is only available for GitHub. Using REST API.")
                 client = GitLabClient(config.get("gitlab_token"), use_cache=not no_cache)
             else:  # github
-                client = GitHubClient(config["token"], use_cache=not no_cache)
+                if use_graphql:
+                    client = GitHubGraphQLClient(config["token"], use_cache=not no_cache)
+                else:
+                    client = GitHubClient(config["token"], use_cache=not no_cache)
 
             scorer = IssueScorer(client)
 
@@ -243,7 +250,8 @@ def show(issue_url, no_cache):
 @click.option("--lang", multiple=True, help="Filter by language (can use multiple times)")
 @click.option("--min-stars", type=int, default=50, help="Minimum repo stars")
 @click.option("--no-cache", is_flag=True, help="Bypass cache and fetch fresh data")
-def lucky(lang, min_stars, no_cache):
+@click.option("--use-graphql", is_flag=True, help="Use GraphQL API for better performance")
+def lucky(lang, min_stars, no_cache, use_graphql):
     """Find ONE perfect issue - feeling lucky mode."""
 
     if not CONFIG_PATH.exists():
@@ -255,7 +263,10 @@ def lucky(lang, min_stars, no_cache):
 
     with console.status("[cyan]Finding your perfect match..."):
         try:
-            client = GitHubClient(config["token"], use_cache=not no_cache)
+            if use_graphql:
+                client = GitHubGraphQLClient(config["token"], use_cache=not no_cache)
+            else:
+                client = GitHubClient(config["token"], use_cache=not no_cache)
             scorer = IssueScorer(client)
 
             # Get more candidates for better lucky pick

@@ -1,19 +1,29 @@
 """Profile analyzer to understand user interests."""
 
 from collections import Counter
-from typing import List
+from typing import List, Union
 from .github import GitHubClient, UserProfile
 
 
 class ProfileAnalyzer:
     """Analyzes a user's GitHub activity to build interest profile."""
 
-    def __init__(self, client: GitHubClient):
+    def __init__(self, client: Union[GitHubClient, 'GitHubGraphQLClient']):
         self.client = client
 
     def build_profile(self, username: str = None) -> UserProfile:
         """Build user profile from GitHub activity."""
 
+        # Check if using GraphQL client
+        from .graphql import GitHubGraphQLClient
+        if isinstance(self.client, GitHubGraphQLClient):
+            if username is None:
+                # For GraphQL, we need username upfront
+                # Fall back to getting from REST
+                raise ValueError("Username required for GraphQL profile analysis")
+            return self.client.get_user_profile(username)
+
+        # REST API path (original implementation)
         if username is None:
             user = self.client.get_user()
             username = user["login"]
