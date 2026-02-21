@@ -125,6 +125,20 @@ gfi success https://github.com/owner/repo/issues/123 --pr https://github.com/own
 gfi wins
 ```
 
+### Watch for new issues (daemon)
+```bash
+# Start background daemon (checks every 6 hours)
+gfi watch --start
+
+# Check status
+gfi watch --status
+
+# Stop daemon
+gfi watch --stop
+```
+
+Desktop notifications for high-quality issues (score ≥ 0.7)
+
 ### Enable live stats (optional)
 ```bash
 gfi telemetry --enable
