@@ -217,9 +217,9 @@ Config stored in `~/.gfi-config.json`:
 - [x] Web version (instant, no install)
 - [x] Success tracking
 - [x] Live activity stats
-- [ ] Support for GitLab issues
-- [ ] Alternative labels ("help wanted", "beginner friendly")
-- [ ] Watch mode with notifications (daemon)
+- [x] Support for GitLab issues
+- [x] Alternative labels ("help wanted", "beginner friendly")
+- [x] Watch mode with notifications (daemon)
 - [ ] Export results to JSON/CSV
 - [ ] GraphQL API support for better performance
 
