@@ -105,22 +105,22 @@ def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_
     # Use specified labels or defaults
     search_labels = list(labels) if labels else ["good first issue", "help wanted", "beginner friendly"]
 
-    with console.status(f"[cyan]Searching {platform} for issues in {', '.join(languages)}..."):
-        try:
-            # Initialize platform client
-            if platform == 'gitlab':
-                if use_graphql:
-                    console.print("[yellow]Warning:[/yellow] GraphQL is only available for GitHub. Using REST API.")
-                client = GitLabClient(config.get("gitlab_token"), use_cache=not no_cache)
-            else:  # github
-                if use_graphql:
-                    client = GitHubGraphQLClient(config["token"], use_cache=not no_cache)
-                else:
-                    client = GitHubClient(config["token"], use_cache=not no_cache)
+    try:
+        # Initialize platform client
+        if platform == 'gitlab':
+            if use_graphql:
+                console.print("[yellow]Warning:[/yellow] GraphQL is only available for GitHub. Using REST API.")
+            client = GitLabClient(config.get("gitlab_token"), use_cache=not no_cache)
+        else:  # github
+            if use_graphql:
+                client = GitHubGraphQLClient(config["token"], use_cache=not no_cache)
+            else:
+                client = GitHubClient(config["token"], use_cache=not no_cache)
 
-            scorer = IssueScorer(client)
+        scorer = IssueScorer(client)
 
-            # Search for issues
+        # Search for issues (status only covers the fetch phase)
+        with console.status(f"[cyan]Searching {platform} for issues in {', '.join(languages)}..."):
             issues = client.search_good_first_issues(
                 languages=languages,
                 min_stars=min_stars,
@@ -129,50 +129,50 @@ def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_
                 labels=search_labels,
             )
 
-            # Score and rank
-            scored_issues = []
-            for issue in issues[:limit * 2]:  # Score subset for speed
-                score = scorer.score_issue(issue)
-                if score.total_score > 0.3:  # Minimum threshold
-                    scored_issues.append((score, issue))
+        # Score and rank
+        scored_issues = []
+        for issue in issues[:limit * 2]:  # Score subset for speed
+            score = scorer.score_issue(issue)
+            if score.total_score > 0.3:  # Minimum threshold
+                scored_issues.append((score, issue))
 
-            # Sort by score
-            scored_issues.sort(key=lambda x: x[0].total_score, reverse=True)
+        # Sort by score
+        scored_issues.sort(key=lambda x: x[0].total_score, reverse=True)
 
-            # Export if requested
-            if export:
-                export_path = _export_results(scored_issues[:limit], export, config["username"])
-                console.print(f"[green]Exported to: {export_path}[/green]")
+        # Export if requested
+        if export:
+            export_path = _export_results(scored_issues[:limit], export, config["username"])
+            console.print(f"[green]Exported to: {export_path}[/green]")
 
-            # Display top results
-            display_issues(scored_issues[:limit], console)
+        # Display top results
+        display_issues(scored_issues[:limit], console)
 
-            # Log telemetry
-            telemetry.log_event("search", {
-                "languages": languages,
-                "results_count": len(scored_issues),
-                "top_score": scored_issues[0][0].total_score if scored_issues else 0,
-            }, config.get("username"))
+        # Log telemetry
+        telemetry.log_event("search", {
+            "languages": languages,
+            "results_count": len(scored_issues),
+            "top_score": scored_issues[0][0].total_score if scored_issues else 0,
+        }, config.get("username"))
 
-            # Show live stats
-            telemetry.display_stats(console)
+        # Show live stats
+        telemetry.display_stats(console)
 
-            # Generate shareable card
-            if not no_card and scored_issues:
-                try:
-                    card_path = generate_card(scored_issues[:limit], config["username"])
-                    console.print(f"\n[dim]Card saved: {card_path}[/dim]")
-                except Exception as e:
-                    # Don't fail if card generation fails
-                    pass
+        # Generate shareable card
+        if not no_card and scored_issues:
+            try:
+                card_path = generate_card(scored_issues[:limit], config["username"])
+                console.print(f"\n[dim]Card saved: {card_path}[/dim]")
+            except Exception as e:
+                # Don't fail if card generation fails
+                pass
 
-                # Offer viral sharing
-                offer_share(scored_issues[:limit], console)
+            # Offer viral sharing
+            offer_share(scored_issues[:limit], console)
 
-        except Exception as e:
-            console.print(f"[red]Error:[/red] {str(e)}")
-            import traceback
-            traceback.print_exc()
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
 @cli.command()
@@ -261,15 +261,15 @@ def lucky(lang, min_stars, no_cache, use_graphql):
     config = json.loads(CONFIG_PATH.read_text())
     languages = list(lang) if lang else config.get("languages", [])[:3]
 
-    with console.status("[cyan]Finding your perfect match..."):
-        try:
-            if use_graphql:
-                client = GitHubGraphQLClient(config["token"], use_cache=not no_cache)
-            else:
-                client = GitHubClient(config["token"], use_cache=not no_cache)
-            scorer = IssueScorer(client)
+    try:
+        if use_graphql:
+            client = GitHubGraphQLClient(config["token"], use_cache=not no_cache)
+        else:
+            client = GitHubClient(config["token"], use_cache=not no_cache)
+        scorer = IssueScorer(client)
 
-            # Get more candidates for better lucky pick
+        # Search (status only covers the fetch phase)
+        with console.status("[cyan]Finding your perfect match..."):
             issues = client.search_good_first_issues(
                 languages=languages,
                 min_stars=min_stars,
@@ -277,34 +277,34 @@ def lucky(lang, min_stars, no_cache, use_graphql):
                 limit=50
             )
 
-            # Score with lucky algorithm
-            lucky_issues = []
-            for issue in issues[:30]:  # Score subset
-                score = scorer.score_for_lucky(issue)
-                if score.lucky_score and score.lucky_score > 0.4:
-                    lucky_issues.append((score, issue))
+        # Score with lucky algorithm
+        lucky_issues = []
+        for issue in issues[:30]:  # Score subset
+            score = scorer.score_for_lucky(issue)
+            if score.lucky_score and score.lucky_score > 0.4:
+                lucky_issues.append((score, issue))
 
-            if not lucky_issues:
-                console.print("[yellow]No lucky match found. Try broadening your search.[/yellow]")
-                return
+        if not lucky_issues:
+            console.print("[yellow]No lucky match found. Try broadening your search.[/yellow]")
+            return
 
-            # Sort by lucky score and take the best
-            lucky_issues.sort(key=lambda x: x[0].lucky_score, reverse=True)
-            best_score, best_issue = lucky_issues[0]
+        # Sort by lucky score and take the best
+        lucky_issues.sort(key=lambda x: x[0].lucky_score, reverse=True)
+        best_score, best_issue = lucky_issues[0]
 
-            # Display the ONE perfect match
-            console.print("\n[bold green]Your Perfect Match[/bold green]\n")
-            display_issue_detail(best_issue, best_score, console)
+        # Display the ONE perfect match
+        console.print("\n[bold green]Your Perfect Match[/bold green]\n")
+        display_issue_detail(best_issue, best_score, console)
 
-            # Offer to generate card
-            try:
-                card_path = generate_card([(best_score, best_issue)], config["username"])
-                console.print(f"\n[dim]Card saved: {card_path}[/dim]")
-            except:
-                pass
+        # Offer to generate card
+        try:
+            card_path = generate_card([(best_score, best_issue)], config["username"])
+            console.print(f"\n[dim]Card saved: {card_path}[/dim]")
+        except:
+            pass
 
-        except Exception as e:
-            console.print(f"[red]Error:[/red] {str(e)}")
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {str(e)}")
 
 
 @cli.command()
