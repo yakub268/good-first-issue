@@ -104,7 +104,8 @@ def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_
 
     # Use specified labels or defaults
     search_labels = list(labels) if labels else ["good first issue", "help wanted", "beginner friendly"]
-
+    # Score and rank
+    scored_issues = []
     with console.status(f"[cyan]Searching {platform} for issues in {', '.join(languages)}..."):
         try:
             # Initialize platform client
@@ -129,8 +130,8 @@ def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_
                 labels=search_labels,
             )
 
-            # Score and rank
-            scored_issues = []
+
+
             for issue in issues[:limit * 2]:  # Score subset for speed
                 score = scorer.score_issue(issue)
                 if score.total_score > 0.3:  # Minimum threshold
@@ -143,9 +144,6 @@ def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_
             if export:
                 export_path = _export_results(scored_issues[:limit], export, config["username"])
                 console.print(f"[green]Exported to: {export_path}[/green]")
-
-            # Display top results
-            display_issues(scored_issues[:limit], console)
 
             # Log telemetry
             telemetry.log_event("search", {
@@ -173,6 +171,9 @@ def find(lang, min_stars, max_age, limit, labels, platform, no_card, export, no_
             console.print(f"[red]Error:[/red] {str(e)}")
             import traceback
             traceback.print_exc()
+
+    # Display top results
+    display_issues(scored_issues[:limit], console)
 
 
 @cli.command()
